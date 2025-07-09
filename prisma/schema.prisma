@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your updated Prisma schema for Job Interview Tracker
+// Replace your existing schema.prisma with this content
 
 generator client {
   provider = "prisma-client-js"
@@ -14,7 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth.js Models
+// NextAuth.js required models
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -45,19 +42,19 @@ model Session {
 model User {
   id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String    @unique
   emailVerified DateTime?
   image         String?
-  accounts      Account[]
-  sessions      Session[]
-  boards        Board[]
-  
-  // Premium features
+  hashedPassword String?
   isPremium     Boolean   @default(false)
-  stripeCustomerId String? @unique
-  
+  premiumUntil  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts        Account[]
+  sessions        Session[]
+  jobApplications JobApplication[]
 }
 
 model VerificationToken {
@@ -68,60 +65,38 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// App-specific Models
-model Board {
+// Job Interview Tracker specific models
+model JobApplication {
   id          String   @id @default(cuid())
-  title       String
-  description String?
-  color       String?  @default("#0079bf") // Default Trello blue
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lists       List[]
+  company     String
+  position    String
+  jobUrl      String?
+  salaryRange String?
+  location    String?
+  jobType     String?  // Full-time, Part-time, Contract, Remote
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Application status tracking
+  status      String   @default("Applied") // Applied, Phone Screen, Interview, Final Round, Offer, Rejected, Withdrawn
+  appliedDate DateTime @default(now())
   
-  @@index([userId])
-}
-
-model List {
-  id        String   @id @default(cuid())
-  title     String
-  order     Int
-  boardId   String
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  cards     Card[]
+  // User notes and research
+  notes            String? @db.Text
+  companyNotes     String? @db.Text
+  interviewNotes   String? @db.Text
   
+  // AI-generated content (JSON fields)
+  aiQuestions      Json? // Generated interview questions
+  companyResearch  Json? // Company insights, news, interview process
+  personalizedPrep Json? // Custom "tell me about yourself" and other personalized answers
+  
+  // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  @@index([boardId])
-  @@unique([boardId, order])
-}
 
-model Card {
-  id          String   @id @default(cuid())
-  title       String
-  description String?  @db.Text
-  order       Int
-  listId      String
-  list        List     @relation(fields: [listId], references: [id], onDelete: Cascade)
-  
-  // AI-generated checklist for study tasks
-  checklist   Json?    @default("[]") // Array of {id, text, completed, aiGenerated}
-  
-  // Additional metadata
-  dueDate     DateTime?
-  labels      String[] @default([])
-  coverImage  String?
-  
-  // AI task breakdown metadata
-  isStudyTask Boolean  @default(false)
-  aiProcessed Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  @@index([listId])
-  @@unique([listId, order])
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
