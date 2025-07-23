@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StudyFlow - Task Management for Students",
-  description: "AI-powered task management designed for college students",
+  title: "PrepAI - Free AI Interview Preparation",
+  description: "Free AI-powered interview preparation with personalized questions, company research, and tailored prep. Track job applications and ace your interviews.",
 };
 
 export default function RootLayout({

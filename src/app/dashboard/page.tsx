@@ -177,13 +177,23 @@ export default function DashboardPage() {
 
     // Sort
     const sorted = [...filtered].sort((a, b) => {
-      let aValue = a[sortField]
-      let bValue = b[sortField]
+      const aValue: unknown = a[sortField]
+      const bValue: unknown = b[sortField]
 
       // Handle date sorting
       if (sortField === 'appliedDate') {
-        aValue = (aValue as Date).getTime()
-        bValue = (bValue as Date).getTime()
+        const aTime = (aValue as Date).getTime()
+        const bTime = (bValue as Date).getTime()
+        
+        // Handle null/undefined values
+        if (!aTime && !bTime) return 0
+        if (!aTime) return 1
+        if (!bTime) return -1
+        
+        // Compare values
+        if (aTime < bTime) return sortDirection === 'asc' ? -1 : 1
+        if (aTime > bTime) return sortDirection === 'asc' ? 1 : -1
+        return 0
       }
 
       // Handle null/undefined values

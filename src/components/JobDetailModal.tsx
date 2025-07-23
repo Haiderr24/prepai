@@ -23,6 +23,7 @@ const STATUS_OPTIONS = [
   'Withdrawn'
 ]
 
+
 export default function JobDetailModal({ 
   isOpen, 
   onClose, 
@@ -47,6 +48,16 @@ export default function JobDetailModal({
   })
   const [status, setStatus] = useState('')
   const [interviewNotes, setInterviewNotes] = useState('')
+  
+  // AI Feature States
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false)
+  const [isResearchingCompany, setIsResearchingCompany] = useState(false)
+  const [isCreatingPrep, setIsCreatingPrep] = useState(false)
+  const [aiQuestions, setAiQuestions] = useState<any>(null)
+  const [companyResearch, setCompanyResearch] = useState<any>(null)
+  const [personalizedPrep, setPersonalizedPrep] = useState<any>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [activeAiView, setActiveAiView] = useState<'questions' | 'research' | 'prep' | null>(null)
 
   // Reset form when job changes
   useEffect(() => {
@@ -165,6 +176,109 @@ export default function JobDetailModal({
       month: 'long',
       day: 'numeric'
     })
+  }
+
+  // AI Feature Handlers
+  const handleGenerateQuestions = async () => {
+    if (!job) return
+    
+    setIsGeneratingQuestions(true)
+    setAiError(null)
+    
+    try {
+      const response = await fetch(`/api/jobs/${job.id}/generate-questions`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate questions')
+      }
+      
+      const data = await response.json()
+      setAiQuestions(data.questions)
+      setActiveAiView('questions')
+      
+      // Update local job state if questions were saved
+      if (data.jobApplication) {
+        onUpdate(job.id, {
+          ...job,
+          aiQuestions: data.questions
+        })
+      }
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : 'Failed to generate questions')
+    } finally {
+      setIsGeneratingQuestions(false)
+    }
+  }
+  
+  const handleResearchCompany = async () => {
+    if (!job) return
+    
+    setIsResearchingCompany(true)
+    setAiError(null)
+    
+    try {
+      const response = await fetch(`/api/jobs/${job.id}/company-research`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to research company')
+      }
+      
+      const data = await response.json()
+      setCompanyResearch(data.research)
+      setActiveAiView('research')
+      
+      // Update local job state if research was saved
+      if (data.jobApplication) {
+        onUpdate(job.id, {
+          ...job,
+          companyResearch: data.research
+        })
+      }
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : 'Failed to research company')
+    } finally {
+      setIsResearchingCompany(false)
+    }
+  }
+  
+  const handleCreatePrep = async () => {
+    if (!job) return
+    
+    setIsCreatingPrep(true)
+    setAiError(null)
+    
+    try {
+      const response = await fetch(`/api/jobs/${job.id}/personalized-prep`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create prep')
+      }
+      
+      const data = await response.json()
+      setPersonalizedPrep(data.prep)
+      setActiveAiView('prep')
+      
+      // Update local job state if prep was saved
+      if (data.jobApplication) {
+        onUpdate(job.id, {
+          ...job,
+          personalizedPrep: data.prep
+        })
+      }
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : 'Failed to create prep')
+    } finally {
+      setIsCreatingPrep(false)
+    }
   }
 
   if (!isOpen || !job) return null
@@ -506,20 +620,14 @@ export default function JobDetailModal({
                         <h4 className="font-medium text-gray-900">Interview Questions</h4>
                       </div>
                       <p className="text-sm text-gray-600 mb-4">
-                        Generate company-specific interview questions based on the role and company.
+                        Generate AI-powered interview questions tailored to this role and company.
                       </p>
-                      {isPremium ? (
-                        <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                          Generate Questions
-                        </button>
-                      ) : (
-                        <div>
-                          <button className="w-full bg-gray-100 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed">
-                            Generate Questions
-                          </button>
-                          <p className="text-xs text-gray-500 mt-2">Premium feature</p>
-                        </div>
-                      )}
+                      <button 
+                        onClick={handleGenerateQuestions}
+                        disabled={isGeneratingQuestions}
+                        className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isGeneratingQuestions ? 'Generating...' : 'Generate Questions'}
+                      </button>
                     </div>
 
                     {/* Company Research */}
@@ -529,20 +637,14 @@ export default function JobDetailModal({
                         <h4 className="font-medium text-gray-900">Company Research</h4>
                       </div>
                       <p className="text-sm text-gray-600 mb-4">
-                        Get deep insights about the company, culture, and interview process.
+                        Get AI-powered insights about the company, culture, and interview process.
                       </p>
-                      {isPremium ? (
-                        <button className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
-                          Research Company
-                        </button>
-                      ) : (
-                        <div>
-                          <button className="w-full bg-gray-100 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed">
-                            Research Company
-                          </button>
-                          <p className="text-xs text-gray-500 mt-2">Premium feature</p>
-                        </div>
-                      )}
+                      <button 
+                        onClick={handleResearchCompany}
+                        disabled={isResearchingCompany}
+                        className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isResearchingCompany ? 'Researching...' : 'Research Company'}
+                      </button>
                     </div>
 
                     {/* Personalized Prep */}
@@ -552,38 +654,393 @@ export default function JobDetailModal({
                         <h4 className="font-medium text-gray-900">Personalized Prep</h4>
                       </div>
                       <p className="text-sm text-gray-600 mb-4">
-                        Create personalized &quot;tell me about yourself&quot; and other key answers.
+                        Create AI-powered personalized interview answers tailored to this role.
                       </p>
-                      {isPremium ? (
-                        <button className="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors">
-                          Create Prep
-                        </button>
-                      ) : (
-                        <div>
-                          <button className="w-full bg-gray-100 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed">
-                            Create Prep
-                          </button>
-                          <p className="text-xs text-gray-500 mt-2">Premium feature</p>
-                        </div>
-                      )}
+                      <button 
+                        onClick={handleCreatePrep}
+                        disabled={isCreatingPrep}
+                        className="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isCreatingPrep ? 'Creating...' : 'Create Prep'}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Upgrade Prompt for Free Users */}
-                  {!isPremium && (
-                    <div className="mt-6 bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-lg text-white">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-semibold mb-1">Unlock AI-Powered Interview Prep</h4>
-                          <p className="text-blue-100">Get personalized questions, company research, and interview preparation for just $12/month.</p>
-                        </div>
-                        <button className="bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-blue-50 transition-colors">
-                          Upgrade Now
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
+                
+                {/* AI Generated Content Display */}
+                {activeAiView && (
+                  <div className="mt-8 border-t pt-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {activeAiView === 'questions' && 'Interview Questions'}
+                        {activeAiView === 'research' && 'Company Research'}
+                        {activeAiView === 'prep' && 'Personalized Interview Prep'}
+                      </h3>
+                      <button 
+                        onClick={() => setActiveAiView(null)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                    
+                    {aiError && (
+                      <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-sm text-red-600">{aiError}</p>
+                      </div>
+                    )}
+                    
+                    {/* Interview Questions Display */}
+                    {activeAiView === 'questions' && aiQuestions && (
+                      <div className="space-y-8">
+                        {/* Behavioral Questions */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Behavioral Questions
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(aiQuestions, 'behavioral')?.map((q: string, i: number) => (
+                              <div key={i} className="flex items-start">
+                                <span className="text-blue-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                <span className="text-gray-700 leading-relaxed">{q}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Technical Interview Prep Focus */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Technical Interview Prep Focus
+                          </h4>
+                          {getTypedValue<Record<string, unknown>>(aiQuestions, 'technical') && 
+                           typeof getTypedValue<Record<string, unknown>>(aiQuestions, 'technical') === 'object' && 
+                           !Array.isArray(getTypedValue<Record<string, unknown>>(aiQuestions, 'technical')) ? (
+                            <div className="space-y-6">
+                              {getTypedValue<string[]>(aiQuestions, 'technical.focus_areas') && (
+                                <div>
+                                  <h5 className="text-md font-medium text-gray-800 mb-3">Focus Areas:</h5>
+                                  <div className="space-y-2 ml-4">
+                                    {getTypedValue<string[]>(aiQuestions, 'technical.focus_areas')?.map((area: string, i: number) => (
+                                      <div key={i} className="flex items-start">
+                                        <span className="text-green-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                        <span className="text-gray-700 leading-relaxed">{area}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {getTypedValue<string[]>(aiQuestions, 'technical.key_topics') && (
+                                <div>
+                                  <h5 className="text-md font-medium text-gray-800 mb-3">Key Topics to Study:</h5>
+                                  <div className="space-y-2 ml-4">
+                                    {getTypedValue<string[]>(aiQuestions, 'technical.key_topics')?.map((topic: string, i: number) => (
+                                      <div key={i} className="flex items-start">
+                                        <span className="text-green-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                        <span className="text-gray-700 leading-relaxed">{topic}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {getTypedValue<string[]>(aiQuestions, 'technical.interview_style') && (
+                                <div>
+                                  <h5 className="text-md font-medium text-gray-800 mb-3">Interview Style:</h5>
+                                  <div className="space-y-2 ml-4">
+                                    {getTypedValue<string[]>(aiQuestions, 'technical.interview_style')?.map((style: string, i: number) => (
+                                      <div key={i} className="flex items-start">
+                                        <span className="text-green-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                        <span className="text-gray-700 leading-relaxed">{style}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {getTypedValue<string[]>(aiQuestions, 'technical.company_values') && (
+                                <div>
+                                  <h5 className="text-md font-medium text-gray-800 mb-3">What They Value:</h5>
+                                  <div className="space-y-2 ml-4">
+                                    {getTypedValue<string[]>(aiQuestions, 'technical.company_values')?.map((value: string, i: number) => (
+                                      <div key={i} className="flex items-start">
+                                        <span className="text-green-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                        <span className="text-gray-700 leading-relaxed">{value}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {getTypedValue<string[]>(aiQuestions, 'technical.prep_recommendations') && (
+                                <div>
+                                  <h5 className="text-md font-medium text-gray-800 mb-3">Preparation Recommendations:</h5>
+                                  <div className="space-y-2 ml-4">
+                                    {getTypedValue<string[]>(aiQuestions, 'technical.prep_recommendations')?.map((rec: string, i: number) => (
+                                      <div key={i} className="flex items-start">
+                                        <span className="text-green-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                        <span className="text-gray-700 leading-relaxed">{rec}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {getTypedValue<string[]>(aiQuestions, 'technical')?.map((q: string, i: number) => (
+                                <div key={i} className="flex items-start">
+                                  <span className="text-green-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                  <span className="text-gray-700 leading-relaxed">{q}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Role-Specific Questions */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Role-Specific Questions
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(aiQuestions, 'roleSpecific')?.map((q: string, i: number) => (
+                              <div key={i} className="flex items-start">
+                                <span className="text-purple-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                <span className="text-gray-700 leading-relaxed">{q}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Company-Specific Questions */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Company-Specific Questions
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(aiQuestions, 'company')?.map((q: string, i: number) => (
+                              <div key={i} className="flex items-start">
+                                <span className="text-orange-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                <span className="text-gray-700 leading-relaxed">{q}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Company Research Display */}
+                    {activeAiView === 'research' && companyResearch && (
+                      <div className="space-y-6">
+                        {getTypedValue<Record<string, unknown>>(companyResearch, 'overview') && (
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-3">Company Overview</h4>
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              {getTypedValue<string>(companyResearch, 'overview.industry') && (
+                                <p className="text-gray-700 mb-2"><strong>Industry:</strong> {getTypedValue<string>(companyResearch, 'overview.industry')}</p>
+                              )}
+                              {getTypedValue<string>(companyResearch, 'overview.description') && (
+                                <p className="text-gray-600">{getTypedValue<string>(companyResearch, 'overview.description')}</p>
+                              )}
+                              {getTypedValue<string>(companyResearch, 'overview.size') && (
+                                <p className="text-gray-700 mt-2"><strong>Size:</strong> {getTypedValue<string>(companyResearch, 'overview.size')}</p>
+                              )}
+                              {getTypedValue<string>(companyResearch, 'overview.founded') && (
+                                <p className="text-gray-700"><strong>Founded:</strong> {getTypedValue<string>(companyResearch, 'overview.founded')}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {getTypedValue<Record<string, unknown>>(companyResearch, 'culture') && (
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-3">Company Culture</h4>
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                              {getTypedValue<string[]>(companyResearch, 'culture.values') && (
+                                <p className="text-gray-700 mb-2"><strong>Values:</strong> {getTypedValue<string[]>(companyResearch, 'culture.values')?.join(', ')}</p>
+                              )}
+                              {getTypedValue<string>(companyResearch, 'culture.workEnvironment') && (
+                                <p className="text-gray-700"><strong>Work Environment:</strong> {getTypedValue<string>(companyResearch, 'culture.workEnvironment')}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {getTypedValue<Record<string, unknown>>(companyResearch, 'interviewProcess') && (
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-3">Interview Process</h4>
+                            <div className="bg-green-50 p-4 rounded-lg">
+                              {getTypedValue<string[]>(companyResearch, 'interviewProcess.rounds') && (
+                                <div className="mb-2">
+                                  <strong>Typical Rounds:</strong>
+                                  <ul className="mt-1 ml-4">
+                                    {getTypedValue<string[]>(companyResearch, 'interviewProcess.rounds')?.map((round: string, i: number) => (
+                                      <li key={i} className="text-gray-700">• {round}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {getTypedValue<string>(companyResearch, 'interviewProcess.timeline') && (
+                                <p className="text-gray-700"><strong>Timeline:</strong> {getTypedValue<string>(companyResearch, 'interviewProcess.timeline')}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {getTypedValue<string[]>(companyResearch, 'recentNews') && getTypedValue<string[]>(companyResearch, 'recentNews')!.length > 0 && (
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-3">Recent News</h4>
+                            <ul className="space-y-2">
+                              {getTypedValue<string[]>(companyResearch, 'recentNews')?.map((news: string, i: number) => (
+                                <li key={i} className="text-gray-700 bg-gray-50 p-3 rounded">• {news}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {getTypedValue<Record<string, unknown>>(companyResearch, 'glassdoorInsights') && (
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-3">Employee Insights</h4>
+                            <div className="bg-purple-50 p-4 rounded-lg">
+                              {getTypedValue<string[]>(companyResearch, 'glassdoorInsights.pros') && (
+                                <div className="mb-3">
+                                  <strong className="text-green-700">Pros:</strong>
+                                  <ul className="mt-1 ml-4">
+                                    {getTypedValue<string[]>(companyResearch, 'glassdoorInsights.pros')?.map((pro: string, i: number) => (
+                                      <li key={i} className="text-gray-700">+ {pro}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {getTypedValue<string[]>(companyResearch, 'glassdoorInsights.cons') && (
+                                <div>
+                                  <strong className="text-red-700">Cons:</strong>
+                                  <ul className="mt-1 ml-4">
+                                    {getTypedValue<string[]>(companyResearch, 'glassdoorInsights.cons')?.map((con: string, i: number) => (
+                                      <li key={i} className="text-gray-700">- {con}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Personalized Prep Display */}
+                    {activeAiView === 'prep' && personalizedPrep && (
+                      <div className="space-y-8">
+                        {/* Tell Me About Yourself Tips */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Tell Me About Yourself - Key Tips
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(personalizedPrep, 'tellMeAboutYourself') 
+                              ? getTypedValue<string[]>(personalizedPrep, 'tellMeAboutYourself')?.map((tip: string, i: number) => (
+                                  <div key={i} className="flex items-start">
+                                    <span className="text-blue-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 leading-relaxed">{tip}</span>
+                                  </div>
+                                ))
+                              : <div className="text-gray-700 leading-relaxed">{getTypedValue<string>(personalizedPrep, 'tellMeAboutYourself') || ''}</div>
+                            }
+                          </div>
+                        </div>
+                        
+                        {/* Why This Company Tips */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Why This Company? - Key Tips
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(personalizedPrep, 'whyThisCompany') 
+                              ? getTypedValue<string[]>(personalizedPrep, 'whyThisCompany')?.map((tip: string, i: number) => (
+                                  <div key={i} className="flex items-start">
+                                    <span className="text-indigo-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 leading-relaxed">{tip}</span>
+                                  </div>
+                                ))
+                              : <div className="text-gray-700 leading-relaxed">{getTypedValue<string>(personalizedPrep, 'whyThisCompany') || ''}</div>
+                            }
+                          </div>
+                        </div>
+                        
+                        {/* Greatest Strength Tips */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Your Greatest Strength - Key Tips
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(personalizedPrep, 'strength') 
+                              ? getTypedValue<string[]>(personalizedPrep, 'strength')?.map((tip: string, i: number) => (
+                                  <div key={i} className="flex items-start">
+                                    <span className="text-green-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 leading-relaxed">{tip}</span>
+                                  </div>
+                                ))
+                              : <div className="text-gray-700 leading-relaxed">{getTypedValue<string>(personalizedPrep, 'strength') || ''}</div>
+                            }
+                          </div>
+                        </div>
+                        
+                        {/* Greatest Weakness Tips */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Your Greatest Weakness - Key Tips
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(personalizedPrep, 'weakness') 
+                              ? getTypedValue<string[]>(personalizedPrep, 'weakness')?.map((tip: string, i: number) => (
+                                  <div key={i} className="flex items-start">
+                                    <span className="text-amber-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 leading-relaxed">{tip}</span>
+                                  </div>
+                                ))
+                              : <div className="text-gray-700 leading-relaxed">{getTypedValue<string>(personalizedPrep, 'weakness') || ''}</div>
+                            }
+                          </div>
+                        </div>
+                        
+                        {/* Questions to Ask */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Questions to Ask the Interviewer
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(personalizedPrep, 'questionsToAsk')?.map((q: string, i: number) => (
+                              <div key={i} className="flex items-start">
+                                <span className="text-purple-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                <span className="text-gray-700 leading-relaxed">{q}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Salary Negotiation Tips */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                            Salary Negotiation Tips
+                          </h4>
+                          <div className="space-y-3">
+                            {getTypedValue<string[]>(personalizedPrep, 'salaryNegotiation') 
+                              ? getTypedValue<string[]>(personalizedPrep, 'salaryNegotiation')?.map((tip: string, i: number) => (
+                                  <div key={i} className="flex items-start">
+                                    <span className="text-emerald-500 mr-3 mt-1 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 leading-relaxed">{tip}</span>
+                                  </div>
+                                ))
+                              : <div className="text-gray-700 leading-relaxed">{getTypedValue<string>(personalizedPrep, 'salaryNegotiation') || ''}</div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

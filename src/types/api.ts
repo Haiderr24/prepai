@@ -105,8 +105,8 @@ export interface PersonalizedPrepRequest {
   skills?: string[]
 }
 
-// Import Prisma types when available
-import type { JobApplication } from '@prisma/client'
+// Import from local types instead of Prisma
+import type { JobApplication } from './dashboard'
 
 // Response types for AI endpoints
 export interface GenerateQuestionsResponse extends ApiSuccess {

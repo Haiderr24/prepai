@@ -47,18 +47,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Check if user has reached application limit (10 for free users)
-    if (!user.isPremium) {
-      const applicationCount = await prisma.jobApplication.count({
-        where: { userId: user.id }
-      })
-
-      if (applicationCount >= 10) {
-        return NextResponse.json({ 
-          error: 'Application limit reached. Upgrade to premium for unlimited job applications.' 
-        }, { status: 403 })
-      }
-    }
 
     const body = await request.json()
     const { 
