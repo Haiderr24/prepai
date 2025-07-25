@@ -1,13 +1,29 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
-import { PrismaAdapter } from '@auth/prisma-adapter'
-import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
+// Conditionally import Prisma only at runtime
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let prisma: any = null
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let PrismaAdapter: any = null
+
+// Only load Prisma during runtime, not build time
+if (typeof window === 'undefined' && process.env.DATABASE_URL) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    prisma = require('@/lib/prisma').prisma
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    PrismaAdapter = require('@auth/prisma-adapter').PrismaAdapter
+  } catch (error) {
+    console.warn('Prisma not available during build:', error)
+  }
+}
+
 export const authOptions: NextAuthOptions = {
-  // @ts-expect-error - Prisma adapter types mismatch with NextAuth
-  adapter: PrismaAdapter(prisma),
+  // Only use adapter if Prisma is available
+  ...(prisma && PrismaAdapter ? { adapter: PrismaAdapter(prisma) } : {}),
   session: {
     strategy: 'jwt'
   },
@@ -32,6 +48,11 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Invalid credentials')
+        }
+
+        // Only use Prisma if available
+        if (!prisma) {
+          throw new Error('Database not available')
         }
 
         const user = await prisma.user.findUnique({
@@ -82,5 +103,5 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-build',
 }
