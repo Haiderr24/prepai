@@ -510,7 +510,6 @@ export default function DashboardPage() {
           job={selectedJob}
           onUpdate={handleJobUpdate}
           onDelete={handleJobDelete}
-          isPremium={session?.user?.isPremium || false}
         />
         </div>
       </div>

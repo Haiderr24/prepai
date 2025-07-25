@@ -5,24 +5,24 @@ const openai = new OpenAI({
 });
 
 // Simple in-memory rate limiting (in production, use Redis or database)
-const rateLimits = new Map<string, { count: number; resetTime: number }>();
+// const rateLimits = new Map<string, { count: number; resetTime: number }>();
 
-function checkRateLimit(userId: string, maxRequests = 10, windowMs = 60000): boolean {
-  const now = Date.now();
-  const userLimit = rateLimits.get(userId);
+// function checkRateLimit(userId: string, maxRequests = 10, windowMs = 60000): boolean {
+//   const now = Date.now();
+//   const userLimit = rateLimits.get(userId);
   
-  if (!userLimit || now > userLimit.resetTime) {
-    rateLimits.set(userId, { count: 1, resetTime: now + windowMs });
-    return true;
-  }
+//   if (!userLimit || now > userLimit.resetTime) {
+//     rateLimits.set(userId, { count: 1, resetTime: now + windowMs });
+//     return true;
+//   }
   
-  if (userLimit.count >= maxRequests) {
-    return false;
-  }
+//   if (userLimit.count >= maxRequests) {
+//     return false;
+//   }
   
-  userLimit.count++;
-  return true;
-}
+//   userLimit.count++;
+//   return true;
+// }
 
 export interface GenerateQuestionsParams {
   company: string;
@@ -131,8 +131,8 @@ Example format:
         roleSpecific: parsed.roleSpecific || parsed.role_specific || [],
         company: parsed.company || [],
       };
-    } catch (parseError) {
-      console.log('JSON parsing failed, trying text extraction:', parseError); // Debug log
+    } catch {
+      console.log('JSON parsing failed, trying text extraction'); // Debug log
       
       // If JSON parsing fails, return some sample questions for now
       console.log('Returning fallback sample questions');
@@ -271,8 +271,8 @@ Keep responses concise. Return valid JSON only.`
           cons: parsed.employee_cons || ["Fast-paced environment", "High expectations"]
         },
       };
-    } catch (parseError) {
-      console.log('Company Research JSON parsing failed:', parseError); // Debug log
+    } catch {
+      console.log('Company Research JSON parsing failed'); // Debug log
       console.log('Failed content:', cleanContent.substring(0, 200)); // Show first 200 chars
       
       // Return well-structured fallback
@@ -372,7 +372,7 @@ Focus on actionable talking points and strategic tips, not scripted answers.`
         ],
         salaryNegotiation: parsed.salary_negotiation_tips || ["Research market rates", "Wait for appropriate timing", "Focus on total compensation package"],
       };
-    } catch (parseError) {
+    } catch {
       // Return structured fallback tips
       return {
         tellMeAboutYourself: [`Highlight your ${params.position} experience`, "Connect your background to this specific role", `Show genuine interest in ${params.company}`],

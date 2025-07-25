@@ -10,7 +10,7 @@ interface JobDetailModalProps {
   job: JobApplication | null
   onUpdate: (jobId: string, updatedJob: JobApplication) => void
   onDelete: (jobId: string) => void
-  isPremium?: boolean
+  // isPremium?: boolean
 }
 
 const STATUS_OPTIONS = [
@@ -29,8 +29,7 @@ export default function JobDetailModal({
   onClose, 
   job, 
   onUpdate, 
-  onDelete,
-  isPremium = false 
+  onDelete
 }: JobDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -53,11 +52,17 @@ export default function JobDetailModal({
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false)
   const [isResearchingCompany, setIsResearchingCompany] = useState(false)
   const [isCreatingPrep, setIsCreatingPrep] = useState(false)
-  const [aiQuestions, setAiQuestions] = useState<any>(null)
-  const [companyResearch, setCompanyResearch] = useState<any>(null)
-  const [personalizedPrep, setPersonalizedPrep] = useState<any>(null)
+  const [aiQuestions, setAiQuestions] = useState<Record<string, string[]> | null>(null)
+  const [companyResearch, setCompanyResearch] = useState<Record<string, string | string[]> | null>(null)
+  const [personalizedPrep, setPersonalizedPrep] = useState<Record<string, string> | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
   const [activeAiView, setActiveAiView] = useState<'questions' | 'research' | 'prep' | null>(null)
+  
+  // Helper function to safely access typed values
+  const getTypedValue = <T,>(obj: Record<string, unknown> | null, key: string): T | undefined => {
+    if (!obj || typeof obj !== 'object') return undefined
+    return obj[key] as T
+  }
 
   // Reset form when job changes
   useEffect(() => {

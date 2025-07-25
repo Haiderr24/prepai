@@ -5,20 +5,20 @@ import { prisma } from '@/lib/prisma'
 import { generatePersonalizedPrep } from '@/lib/openai'
 import { JobApplication } from '@/types/dashboard'
 
-interface User {
-  id: string
-  name?: string | null
-  email: string
-}
+// interface User {
+//   id: string
+//   name?: string | null
+//   email: string
+// }
 
 // Helper function to generate dynamic personalized prep
-function generateDynamicPrep(job: JobApplication, user: User) {
+function generateDynamicPrep(job: JobApplication) {
   const company = job.company
   const position = job.position
-  const userName = user.name || 'candidate'
+  // const userName = user.name || 'candidate'
   
   const isSenior = position.toLowerCase().includes('senior') || position.toLowerCase().includes('lead')
-  const isManager = position.toLowerCase().includes('manager') || position.toLowerCase().includes('director')
+  // const isManager = position.toLowerCase().includes('manager') || position.toLowerCase().includes('director')
   const isTech = position.toLowerCase().includes('engineer') || position.toLowerCase().includes('developer') ||
                  position.toLowerCase().includes('architect') || position.toLowerCase().includes('data')
   const isStartup = company.toLowerCase().includes('labs') || company.toLowerCase().includes('ai') || 
@@ -56,8 +56,9 @@ function generateDynamicPrep(job: JobApplication, user: User) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
+  const params = await context.params;
   try {
     const session = await getServerSession(authOptions)
     
@@ -108,7 +109,7 @@ export async function POST(
     } catch (aiError) {
       console.error('OpenAI API failed, using fallback:', aiError)
       // Fallback to dynamic prep if OpenAI fails
-      personalizedPrep = generateDynamicPrep(jobApplication, user)
+      personalizedPrep = generateDynamicPrep(jobApplication)
     }
 
     // Save personalized prep to the job application

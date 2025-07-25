@@ -5,7 +5,14 @@ import { prisma } from '@/lib/prisma'
 import { generateInterviewQuestions } from '@/lib/openai'
 
 // Helper function to generate dynamic questions based on job details
-function generateDynamicQuestions(job: any) {
+interface JobApplication {
+  company: string
+  position: string
+  jobType?: string | null
+  location?: string | null
+}
+
+function generateDynamicQuestions(job: JobApplication) {
   const company = job.company
   const position = job.position
   const jobType = job.jobType || 'Full-time'
@@ -18,8 +25,8 @@ function generateDynamicQuestions(job: any) {
                  position.toLowerCase().includes('architect') || position.toLowerCase().includes('data')
   const isDesign = position.toLowerCase().includes('design') || position.toLowerCase().includes('ux') || 
                    position.toLowerCase().includes('ui')
-  const isSales = position.toLowerCase().includes('sales') || position.toLowerCase().includes('business development')
-  const isMarketing = position.toLowerCase().includes('marketing') || position.toLowerCase().includes('growth')
+  // const isSales = position.toLowerCase().includes('sales') || position.toLowerCase().includes('business development')
+  // const isMarketing = position.toLowerCase().includes('marketing') || position.toLowerCase().includes('growth')
   
   return {
     behavioral: [
@@ -87,8 +94,9 @@ function generateDynamicQuestions(job: any) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
+  const params = await context.params;
   try {
     const session = await getServerSession(authOptions)
     

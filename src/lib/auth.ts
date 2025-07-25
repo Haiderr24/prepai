@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
+  // @ts-expect-error - Prisma adapter types mismatch with NextAuth
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: 'jwt'

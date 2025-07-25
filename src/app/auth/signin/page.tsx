@@ -32,7 +32,7 @@ export default function SignIn() {
         router.push('/dashboard')
         router.refresh()
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -50,12 +50,12 @@ export default function SignIn() {
       })
       
       if (result?.error) {
-        setError('Google sign-in is not configured yet. Please use email/password.')
+        setError('Failed to sign in with Google. Please try again.')
       } else if (result?.url) {
         window.location.href = result.url
       }
-    } catch (error) {
-      setError('Google sign-in is not configured yet. Please use email/password.')
+    } catch {
+      setError('Failed to sign in with Google. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -147,7 +147,7 @@ export default function SignIn() {
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                disabled={isLoading || !process.env.NEXT_PUBLIC_GOOGLE_CONFIGURED}
+                disabled={isLoading}
                 className="w-full flex items-center justify-center px-4 py-3 border border-slate-600 text-base font-medium rounded-lg text-white bg-slate-700 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl mb-6"
               >
                 <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -156,7 +156,7 @@ export default function SignIn() {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continue with Google (Setup Required)
+                Continue with Google
               </button>
               
               <div className="relative mb-6">
@@ -254,7 +254,7 @@ export default function SignIn() {
 
                 <div className="text-center">
                   <p className="text-sm text-slate-400">
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <Link 
                       href="/auth/signup" 
                       className="font-medium text-violet-400 hover:text-violet-300 transition-colors"

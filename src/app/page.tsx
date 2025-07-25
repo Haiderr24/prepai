@@ -1,13 +1,13 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Brain, Sparkles, Building, FileText, CheckCircle } from 'lucide-react'
+import { Brain, Sparkles, Building, FileText } from 'lucide-react'
 
 export default function Home() {
   const { data: session } = useSession()
-  const router = useRouter()
+  // const router = useRouter()
 
   const features = [
     {

@@ -146,8 +146,9 @@ function generateDynamicResearch(job: JobApplication) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
+  const params = await context.params;
   try {
     const session = await getServerSession(authOptions)
     
