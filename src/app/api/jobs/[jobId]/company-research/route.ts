@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { generateCompanyResearch } from '@/lib/openai'
 import { JobApplication } from '@/types/dashboard'
 
+export const dynamic = 'force-dynamic'
+
 // Helper function to generate dynamic company research based on company details
 function generateDynamicResearch(job: JobApplication) {
   const company = job.company

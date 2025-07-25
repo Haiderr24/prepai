@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { generatePersonalizedPrep } from '@/lib/openai'
 import { JobApplication } from '@/types/dashboard'
 
+export const dynamic = 'force-dynamic'
+
 // interface User {
 //   id: string
 //   name?: string | null

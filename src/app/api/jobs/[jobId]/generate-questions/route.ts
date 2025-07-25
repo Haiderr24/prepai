@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateInterviewQuestions } from '@/lib/openai'
 
+export const dynamic = 'force-dynamic'
+
 // Helper function to generate dynamic questions based on job details
 interface JobApplication {
   company: string
