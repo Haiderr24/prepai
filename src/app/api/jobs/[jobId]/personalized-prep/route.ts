@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { generatePersonalizedPrep } from '@/lib/openai'
 import { JobApplication } from '@/types/dashboard'
 
@@ -62,6 +61,7 @@ export async function POST(
 ) {
   const params = await context.params;
   try {
+    const { prisma } = await import('@/lib/prisma')
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {

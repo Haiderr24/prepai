@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { prisma } from '@/lib/prisma'
 
 // Mark this route as dynamic since it uses database operations
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
+    // Only import Prisma at runtime
+    const { prisma } = await import('@/lib/prisma')
+    
     const { email, password, name } = await request.json()
 
     if (!email || !password) {

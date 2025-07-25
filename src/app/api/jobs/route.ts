@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 
 // Mark this route as dynamic since it uses database operations
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    const { prisma } = await import('@/lib/prisma')
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
@@ -36,6 +36,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { prisma } = await import('@/lib/prisma')
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
