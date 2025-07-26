@@ -201,6 +201,15 @@ export default function JobDetailModal({
       }
       
       const data = await response.json()
+      
+      // Debug logging
+      console.log('AI Questions Response:', {
+        metadata: data.metadata,
+        questionsReceived: !!data.questions,
+        isAIGenerated: data.metadata?.isAIGenerated,
+        apiKeyStatus: data.metadata?.apiKeyStatus
+      })
+      
       setAiQuestions(data.questions)
       setActiveAiView('questions')
       
@@ -235,6 +244,15 @@ export default function JobDetailModal({
       }
       
       const data = await response.json()
+      
+      // Debug logging
+      console.log('Company Research Response:', {
+        metadata: data.metadata,
+        researchReceived: !!data.research,
+        isAIGenerated: data.metadata?.isAIGenerated,
+        apiKeyStatus: data.metadata?.apiKeyStatus
+      })
+      
       setCompanyResearch(data.research)
       setActiveAiView('research')
       
@@ -269,6 +287,15 @@ export default function JobDetailModal({
       }
       
       const data = await response.json()
+      
+      // Debug logging
+      console.log('Personalized Prep Response:', {
+        metadata: data.metadata,
+        prepReceived: !!data.prep,
+        isAIGenerated: data.metadata?.isAIGenerated,
+        apiKeyStatus: data.metadata?.apiKeyStatus
+      })
+      
       setPersonalizedPrep(data.prep)
       setActiveAiView('prep')
       

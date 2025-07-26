@@ -126,15 +126,23 @@ export async function POST(
       }
     })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: 'Personalized interview preparation created successfully',
       prep: personalizedPrep,
       jobApplication: updatedApplication,
       metadata: {
         isAIGenerated: isUsingAI,
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
+        apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+        environment: process.env.NODE_ENV || 'unknown'
       }
     })
+    
+    // Add debug headers
+    response.headers.set('X-AI-Status', isUsingAI ? 'openai' : 'fallback')
+    response.headers.set('X-API-Key-Status', process.env.OPENAI_API_KEY ? 'present' : 'missing')
+    
+    return response
   } catch (error) {
     console.error('Error creating personalized prep:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
