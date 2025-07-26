@@ -58,10 +58,23 @@ export default function JobDetailModal({
   const [aiError, setAiError] = useState<string | null>(null)
   const [activeAiView, setActiveAiView] = useState<'questions' | 'research' | 'prep' | null>(null)
   
-  // Helper function to safely access typed values
+  // Helper function to safely access typed values with dot notation support
   const getTypedValue = <T,>(obj: Record<string, unknown> | null, key: string): T | undefined => {
     if (!obj || typeof obj !== 'object') return undefined
-    return obj[key] as T
+    
+    // Handle dot notation for nested objects
+    const keys = key.split('.')
+    let current: unknown = obj
+    
+    for (const k of keys) {
+      if (current && typeof current === 'object' && !Array.isArray(current)) {
+        current = (current as Record<string, unknown>)[k]
+      } else {
+        return undefined
+      }
+    }
+    
+    return current as T
   }
 
   // Reset form when job changes
