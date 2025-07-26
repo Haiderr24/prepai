@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import AddJobModal from '@/components/AddJobModal'
 import JobDetailModal from '@/components/JobDetailModal'
 import { JobApplication, JobFormData } from '@/types/dashboard'
-import { ChevronUp, ChevronDown, Edit, Trash2, Brain } from 'lucide-react'
+import { ChevronUp, ChevronDown, Edit, Trash2, Brain, LogOut } from 'lucide-react'
 
 type SortField = 'company' | 'position' | 'location' | 'salaryRange' | 'status' | 'appliedDate'
 type SortDirection = 'asc' | 'desc'
@@ -259,8 +259,26 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="bg-gray-900 border-b border-gray-800 px-6 py-8">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold text-white">Job Applications</h1>
-            <p className="text-gray-400 mt-2">Track your job search progress and manage applications</p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold text-white">Job Applications</h1>
+                <p className="text-gray-400 mt-2">Track your job search progress and manage applications</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-sm text-gray-400">Signed in as</p>
+                  <p className="text-white font-medium">{session?.user?.email}</p>
+                </div>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
             
             {error && (
               <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">

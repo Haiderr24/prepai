@@ -1,7 +1,12 @@
 import OpenAI from 'openai';
 
+// Check if API key exists
+if (!process.env.OPENAI_API_KEY) {
+  console.error('WARNING: OPENAI_API_KEY is not set in environment variables');
+}
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || 'dummy-key-for-build',
 });
 
 // Simple in-memory rate limiting (in production, use Redis or database)
@@ -45,6 +50,9 @@ export interface PersonalizedPrepParams {
 
 export async function generateInterviewQuestions(params: GenerateQuestionsParams) {
   try {
+    console.log('Generating interview questions for:', params.company, params.position);
+    console.log('OpenAI API Key status:', process.env.OPENAI_API_KEY ? 'Set' : 'Missing');
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -170,16 +178,35 @@ Example format:
   } catch (error: unknown) {
     console.error('Error generating interview questions:', error);
     
+    // Log more details about the error
+    if (error && typeof error === 'object') {
+      console.error('Error details:', {
+        message: (error as any).message,
+        status: (error as any).status,
+        code: (error as any).code,
+        type: (error as any).type,
+      });
+    }
+    
     // Provide specific error messages for common issues
     if (error && typeof error === 'object' && 'status' in error) {
       const errorStatus = (error as { status: number }).status;
       if (errorStatus === 429) {
+        console.error('OpenAI quota exceeded - using fallback');
         throw new Error('OpenAI API quota exceeded. Please check your billing settings.')
       } else if (errorStatus === 401) {
+        console.error('OpenAI API key invalid - using fallback');
         throw new Error('OpenAI API key is invalid. Please check your configuration.')
       } else if (errorStatus >= 500) {
+        console.error('OpenAI service error - using fallback');
         throw new Error('OpenAI service is temporarily unavailable. Please try again later.')
       }
+    }
+    
+    // Check for API key issues
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy-key-for-build') {
+      console.error('No valid OpenAI API key found - using fallback');
+      throw new Error('OpenAI API key not configured')
     }
     
     throw new Error('Failed to generate interview questions')
@@ -188,6 +215,9 @@ Example format:
 
 export async function generateCompanyResearch(params: CompanyResearchParams) {
   try {
+    console.log('Generating company research for:', params.company);
+    console.log('OpenAI API Key status:', process.env.OPENAI_API_KEY ? 'Set' : 'Missing');
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -306,16 +336,35 @@ Keep responses concise. Return valid JSON only.`
   } catch (error: unknown) {
     console.error('Error generating company research:', error);
     
+    // Log more details about the error
+    if (error && typeof error === 'object') {
+      console.error('Company research error details:', {
+        message: (error as any).message,
+        status: (error as any).status,
+        code: (error as any).code,
+        type: (error as any).type,
+      });
+    }
+    
     // Provide specific error messages for common issues
     if (error && typeof error === 'object' && 'status' in error) {
       const errorStatus = (error as { status: number }).status;
       if (errorStatus === 429) {
+        console.error('OpenAI quota exceeded for company research - using fallback');
         throw new Error('OpenAI API quota exceeded. Please check your billing settings.')
       } else if (errorStatus === 401) {
+        console.error('OpenAI API key invalid for company research - using fallback');
         throw new Error('OpenAI API key is invalid. Please check your configuration.')
       } else if (errorStatus >= 500) {
+        console.error('OpenAI service error for company research - using fallback');
         throw new Error('OpenAI service is temporarily unavailable. Please try again later.')
       }
+    }
+    
+    // Check for API key issues
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy-key-for-build') {
+      console.error('No valid OpenAI API key found for company research - using fallback');
+      throw new Error('OpenAI API key not configured')
     }
     
     throw new Error('Failed to generate company research')
@@ -324,6 +373,9 @@ Keep responses concise. Return valid JSON only.`
 
 export async function generatePersonalizedPrep(params: PersonalizedPrepParams) {
   try {
+    console.log('Generating personalized prep for:', params.company, params.position);
+    console.log('OpenAI API Key status:', process.env.OPENAI_API_KEY ? 'Set' : 'Missing');
+    
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -392,16 +444,35 @@ Focus on actionable talking points and strategic tips, not scripted answers.`
   } catch (error: unknown) {
     console.error('Error generating personalized prep:', error);
     
+    // Log more details about the error
+    if (error && typeof error === 'object') {
+      console.error('Personalized prep error details:', {
+        message: (error as any).message,
+        status: (error as any).status,
+        code: (error as any).code,
+        type: (error as any).type,
+      });
+    }
+    
     // Provide specific error messages for common issues
     if (error && typeof error === 'object' && 'status' in error) {
       const errorStatus = (error as { status: number }).status;
       if (errorStatus === 429) {
+        console.error('OpenAI quota exceeded for personalized prep - using fallback');
         throw new Error('OpenAI API quota exceeded. Please check your billing settings.')
       } else if (errorStatus === 401) {
+        console.error('OpenAI API key invalid for personalized prep - using fallback');
         throw new Error('OpenAI API key is invalid. Please check your configuration.')
       } else if (errorStatus >= 500) {
+        console.error('OpenAI service error for personalized prep - using fallback');
         throw new Error('OpenAI service is temporarily unavailable. Please try again later.')
       }
+    }
+    
+    // Check for API key issues
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy-key-for-build') {
+      console.error('No valid OpenAI API key found for personalized prep - using fallback');
+      throw new Error('OpenAI API key not configured')
     }
     
     throw new Error('Failed to generate personalized preparation')

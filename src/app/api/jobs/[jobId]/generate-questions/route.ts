@@ -139,6 +139,7 @@ export async function POST(
 
     // Generate AI-powered questions using OpenAI
     let questions
+    let isUsingAI = true
     try {
       questions = await generateInterviewQuestions({
         company: jobApplication.company,
@@ -146,10 +147,13 @@ export async function POST(
         jobDescription: jobApplication.notes || undefined,
         jobType: jobApplication.jobType || undefined,
       })
+      console.log('Successfully generated AI questions for:', jobApplication.company)
     } catch (aiError) {
       console.error('OpenAI API failed, using fallback:', aiError)
+      isUsingAI = false
       // Fallback to dynamic questions if OpenAI fails
       questions = generateDynamicQuestions(jobApplication)
+      console.log('Using fallback questions for:', jobApplication.company)
     }
 
     // Save generated questions to the job application
@@ -163,7 +167,11 @@ export async function POST(
     return NextResponse.json({
       message: 'Interview questions generated successfully',
       questions,
-      jobApplication: updatedApplication
+      jobApplication: updatedApplication,
+      metadata: {
+        isAIGenerated: isUsingAI,
+        generatedAt: new Date().toISOString()
+      }
     })
   } catch (error) {
     console.error('Error generating interview questions:', error)

@@ -191,15 +191,19 @@ export async function POST(
 
     // Generate AI-powered company research using OpenAI
     let research
+    let isUsingAI = true
     try {
       research = await generateCompanyResearch({
         company: jobApplication.company,
         position: jobApplication.position,
       })
+      console.log('Successfully generated AI company research for:', jobApplication.company)
     } catch (aiError) {
-      console.error('OpenAI API failed, using fallback:', aiError)
+      console.error('OpenAI API failed for company research, using fallback:', aiError)
+      isUsingAI = false
       // Fallback to dynamic research if OpenAI fails
       research = generateDynamicResearch(jobApplication)
+      console.log('Using fallback company research for:', jobApplication.company)
     }
 
     // Save research to the job application
@@ -213,7 +217,11 @@ export async function POST(
     return NextResponse.json({
       message: 'Company research completed successfully',
       research,
-      jobApplication: updatedApplication
+      jobApplication: updatedApplication,
+      metadata: {
+        isAIGenerated: isUsingAI,
+        generatedAt: new Date().toISOString()
+      }
     })
   } catch (error) {
     console.error('Error researching company:', error)

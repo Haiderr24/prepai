@@ -101,6 +101,7 @@ export async function POST(
 
     // Generate AI-powered personalized prep using OpenAI
     let personalizedPrep
+    let isUsingAI = true
     try {
       personalizedPrep = await generatePersonalizedPrep({
         company: jobApplication.company,
@@ -108,10 +109,13 @@ export async function POST(
         userBackground: user.name || 'candidate',
         jobDescription: jobApplication.notes || undefined,
       })
+      console.log('Successfully generated AI personalized prep for:', jobApplication.company)
     } catch (aiError) {
-      console.error('OpenAI API failed, using fallback:', aiError)
+      console.error('OpenAI API failed for personalized prep, using fallback:', aiError)
+      isUsingAI = false
       // Fallback to dynamic prep if OpenAI fails
       personalizedPrep = generateDynamicPrep(jobApplication)
+      console.log('Using fallback personalized prep for:', jobApplication.company)
     }
 
     // Save personalized prep to the job application
@@ -125,7 +129,11 @@ export async function POST(
     return NextResponse.json({
       message: 'Personalized interview preparation created successfully',
       prep: personalizedPrep,
-      jobApplication: updatedApplication
+      jobApplication: updatedApplication,
+      metadata: {
+        isAIGenerated: isUsingAI,
+        generatedAt: new Date().toISOString()
+      }
     })
   } catch (error) {
     console.error('Error creating personalized prep:', error)
