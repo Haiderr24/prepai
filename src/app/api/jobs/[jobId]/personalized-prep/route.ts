@@ -92,30 +92,61 @@ export async function POST(
     // Check for existing personalized prep to avoid redundant API calls
     // Skip cache in development mode for testing
     if (jobApplication.personalizedPrep && process.env.NODE_ENV !== 'development') {
-      return NextResponse.json({
+      console.log('🔄 Returning cached personalized prep for:', jobApplication.company)
+      const response = NextResponse.json({
         message: 'Personalized prep already created',
         prep: jobApplication.personalizedPrep,
-        jobApplication
+        jobApplication,
+        metadata: {
+          isAIGenerated: null, // Unknown for cached data
+          generatedAt: new Date().toISOString(),
+          apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+          environment: process.env.NODE_ENV || 'unknown',
+          cached: true
+        }
       })
+      
+      response.headers.set('X-AI-Status', 'cached')
+      response.headers.set('X-API-Key-Status', process.env.OPENAI_API_KEY ? 'present' : 'missing')
+      
+      return response
     }
+
+    // Log environment status
+    console.log('Personalized Prep Debug:', {
+      hasApiKey: !!process.env.OPENAI_API_KEY,
+      keyPrefix: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 10) + '...' : 'NONE',
+      environment: process.env.NODE_ENV,
+      company: jobApplication.company
+    })
 
     // Generate AI-powered personalized prep using OpenAI
     let personalizedPrep
     let isUsingAI = true
+    let errorDetails = null
+    
     try {
+      console.log('Attempting OpenAI personalized prep generation...')
       personalizedPrep = await generatePersonalizedPrep({
         company: jobApplication.company,
         position: jobApplication.position,
         userBackground: user.name || 'candidate',
         jobDescription: jobApplication.notes || undefined,
       })
-      console.log('Successfully generated AI personalized prep for:', jobApplication.company)
+      console.log('✅ Successfully generated AI personalized prep for:', jobApplication.company)
     } catch (aiError) {
-      console.error('OpenAI API failed for personalized prep, using fallback:', aiError)
+      console.error('❌ OpenAI API failed for personalized prep:', {
+        error: aiError,
+        message: aiError instanceof Error ? aiError.message : 'Unknown error',
+        company: jobApplication.company
+      })
+      
+      errorDetails = aiError instanceof Error ? aiError.message : 'Unknown error'
       isUsingAI = false
+      
       // Fallback to dynamic prep if OpenAI fails
       personalizedPrep = generateDynamicPrep(jobApplication)
-      console.log('Using fallback personalized prep for:', jobApplication.company)
+      console.log('🔄 Using fallback personalized prep for:', jobApplication.company)
     }
 
     // Save personalized prep to the job application
@@ -134,7 +165,8 @@ export async function POST(
         isAIGenerated: isUsingAI,
         generatedAt: new Date().toISOString(),
         apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
-        environment: process.env.NODE_ENV || 'unknown'
+        environment: process.env.NODE_ENV || 'unknown',
+        errorDetails: errorDetails
       }
     })
     

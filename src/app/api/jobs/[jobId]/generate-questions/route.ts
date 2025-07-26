@@ -130,30 +130,61 @@ export async function POST(
     // Check for existing AI questions to avoid redundant API calls
     // Skip cache in development mode for testing
     if (jobApplication.aiQuestions && process.env.NODE_ENV !== 'development') {
-      return NextResponse.json({
+      console.log('🔄 Returning cached questions for:', jobApplication.company)
+      const response = NextResponse.json({
         message: 'Interview questions already generated',
         questions: jobApplication.aiQuestions,
-        jobApplication
+        jobApplication,
+        metadata: {
+          isAIGenerated: null, // Unknown for cached data
+          generatedAt: new Date().toISOString(),
+          apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+          environment: process.env.NODE_ENV || 'unknown',
+          cached: true
+        }
       })
+      
+      response.headers.set('X-AI-Status', 'cached')
+      response.headers.set('X-API-Key-Status', process.env.OPENAI_API_KEY ? 'present' : 'missing')
+      
+      return response
     }
+
+    // Log environment status
+    console.log('Generate Questions Debug:', {
+      hasApiKey: !!process.env.OPENAI_API_KEY,
+      keyPrefix: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 10) + '...' : 'NONE',
+      environment: process.env.NODE_ENV,
+      company: jobApplication.company
+    })
 
     // Generate AI-powered questions using OpenAI
     let questions
     let isUsingAI = true
+    let errorDetails = null
+    
     try {
+      console.log('Attempting OpenAI question generation...')
       questions = await generateInterviewQuestions({
         company: jobApplication.company,
         position: jobApplication.position,
         jobDescription: jobApplication.notes || undefined,
         jobType: jobApplication.jobType || undefined,
       })
-      console.log('Successfully generated AI questions for:', jobApplication.company)
+      console.log('✅ Successfully generated AI questions for:', jobApplication.company)
     } catch (aiError) {
-      console.error('OpenAI API failed, using fallback:', aiError)
+      console.error('❌ OpenAI API failed for questions:', {
+        error: aiError,
+        message: aiError instanceof Error ? aiError.message : 'Unknown error',
+        company: jobApplication.company
+      })
+      
+      errorDetails = aiError instanceof Error ? aiError.message : 'Unknown error'
       isUsingAI = false
+      
       // Fallback to dynamic questions if OpenAI fails
       questions = generateDynamicQuestions(jobApplication)
-      console.log('Using fallback questions for:', jobApplication.company)
+      console.log('🔄 Using fallback questions for:', jobApplication.company)
     }
 
     // Save generated questions to the job application
@@ -172,7 +203,8 @@ export async function POST(
         isAIGenerated: isUsingAI,
         generatedAt: new Date().toISOString(),
         apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
-        environment: process.env.NODE_ENV || 'unknown'
+        environment: process.env.NODE_ENV || 'unknown',
+        errorDetails: errorDetails
       }
     })
     

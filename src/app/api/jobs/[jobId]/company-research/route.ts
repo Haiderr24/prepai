@@ -182,28 +182,59 @@ export async function POST(
     // Check for existing company research to avoid redundant API calls
     // Skip cache in development mode for testing
     if (jobApplication.companyResearch && process.env.NODE_ENV !== 'development') {
-      return NextResponse.json({
+      console.log('🔄 Returning cached company research for:', jobApplication.company)
+      const response = NextResponse.json({
         message: 'Company research already completed',
         research: jobApplication.companyResearch,
-        jobApplication
+        jobApplication,
+        metadata: {
+          isAIGenerated: null, // Unknown for cached data
+          generatedAt: new Date().toISOString(),
+          apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+          environment: process.env.NODE_ENV || 'unknown',
+          cached: true
+        }
       })
+      
+      response.headers.set('X-AI-Status', 'cached')
+      response.headers.set('X-API-Key-Status', process.env.OPENAI_API_KEY ? 'present' : 'missing')
+      
+      return response
     }
+
+    // Log environment status
+    console.log('Company Research Debug:', {
+      hasApiKey: !!process.env.OPENAI_API_KEY,
+      keyPrefix: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 10) + '...' : 'NONE',
+      environment: process.env.NODE_ENV,
+      company: jobApplication.company
+    })
 
     // Generate AI-powered company research using OpenAI
     let research
     let isUsingAI = true
+    let errorDetails = null
+    
     try {
+      console.log('Attempting OpenAI company research...')
       research = await generateCompanyResearch({
         company: jobApplication.company,
         position: jobApplication.position,
       })
-      console.log('Successfully generated AI company research for:', jobApplication.company)
+      console.log('✅ Successfully generated AI company research for:', jobApplication.company)
     } catch (aiError) {
-      console.error('OpenAI API failed for company research, using fallback:', aiError)
+      console.error('❌ OpenAI API failed for company research:', {
+        error: aiError,
+        message: aiError instanceof Error ? aiError.message : 'Unknown error',
+        company: jobApplication.company
+      })
+      
+      errorDetails = aiError instanceof Error ? aiError.message : 'Unknown error'
       isUsingAI = false
+      
       // Fallback to dynamic research if OpenAI fails
       research = generateDynamicResearch(jobApplication)
-      console.log('Using fallback company research for:', jobApplication.company)
+      console.log('🔄 Using fallback company research for:', jobApplication.company)
     }
 
     // Save research to the job application
@@ -222,7 +253,8 @@ export async function POST(
         isAIGenerated: isUsingAI,
         generatedAt: new Date().toISOString(),
         apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
-        environment: process.env.NODE_ENV || 'unknown'
+        environment: process.env.NODE_ENV || 'unknown',
+        errorDetails: errorDetails
       }
     })
     
@@ -232,7 +264,20 @@ export async function POST(
     
     return response
   } catch (error) {
-    console.error('Error researching company:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('❌ FATAL ERROR in company research endpoint:', {
+      error: error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      metadata: {
+        isAIGenerated: false,
+        generatedAt: new Date().toISOString(),
+        apiKeyStatus: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
+        environment: process.env.NODE_ENV || 'unknown',
+        errorDetails: error instanceof Error ? error.message : 'Fatal error occurred'
+      }
+    }, { status: 500 })
   }
 }
