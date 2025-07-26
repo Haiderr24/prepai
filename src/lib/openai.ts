@@ -80,6 +80,13 @@ Generate interview questions that reflect ${params.company}'s actual interview s
 - What ${params.company} values in technical interviews (clean code, communication, problem-solving approach, etc.)
 - Concrete preparation recommendations tailored to ${params.company}'s process
 
+CRITICAL: The "technical" field MUST be an object with these exact subfields:
+- "focus_areas": array of technical areas to focus on
+- "key_topics": array of specific topics to study
+- "interview_style": array of interview formats used
+- "company_values": array of what the company values
+- "prep_recommendations": array of specific preparation steps
+
 **Role-Specific Questions (5-6 questions):**
 - Ask about specific scenarios this ${params.position} would encounter
 - Include questions about collaboration with other teams/roles
@@ -127,9 +134,10 @@ Example format:
     try {
       const parsed = JSON.parse(content);
       console.log('Parsed JSON:', parsed); // Debug log
+      console.log('Technical section:', parsed.technical); // Debug technical section specifically
       return {
         behavioral: parsed.behavioral || [],
-        technical: parsed.technical || {
+        technical: parsed.technical && typeof parsed.technical === 'object' ? parsed.technical : {
           focus_areas: ["algorithms", "problem solving"],
           key_topics: ["data structures", "coding fundamentals"],
           interview_style: ["whiteboard coding", "behavioral discussion"],
@@ -232,6 +240,8 @@ export async function generateCompanyResearch(params: CompanyResearchParams) {
 
 RESPOND WITH ONLY VALID JSON - NO OTHER TEXT:
 
+CRITICAL: Your response MUST include ALL of these fields exactly as shown:
+
 {
   "industry": "Technology",
   "size": "500-1000 employees", 
@@ -247,11 +257,11 @@ RESPOND WITH ONLY VALID JSON - NO OTHER TEXT:
   "employee_cons": ["Challenge 1", "Challenge 2"]
 }
 
-Keep responses concise. Return valid JSON only.`
+MANDATORY: Include ALL fields above. Do not omit any field. Keep responses concise but complete.`
         }
       ],
       temperature: 0.6,
-      max_tokens: 1000,
+      max_tokens: 1500,
       response_format: { type: "json_object" },
     });
 
@@ -274,6 +284,10 @@ Keep responses concise. Return valid JSON only.`
     try {
       const parsed = JSON.parse(cleanContent);
       console.log('Company Research Parsed JSON:', parsed); // Debug log
+      console.log('Available fields:', Object.keys(parsed)); // Debug available fields
+      console.log('Missing industry?', !parsed.industry);
+      console.log('Missing values?', !parsed.values);
+      console.log('Missing recent_news?', !parsed.recent_news);
       
       // Convert flat structure to expected nested format for frontend
       return {
