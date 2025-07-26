@@ -210,6 +210,15 @@ export default function JobDetailModal({
         apiKeyStatus: data.metadata?.apiKeyStatus
       })
       
+      // Debug actual content
+      if (data.questions) {
+        console.log('Questions Content:')
+        console.log('- Behavioral Questions:', data.questions.behavioral?.length || 0, 'items')
+        console.log('- Technical Prep:', data.questions.technical)
+        console.log('- Role Specific:', data.questions.roleSpecific?.length || 0, 'items')  
+        console.log('- Company Questions:', data.questions.company?.length || 0, 'items')
+      }
+      
       setAiQuestions(data.questions)
       setActiveAiView('questions')
       
@@ -252,6 +261,17 @@ export default function JobDetailModal({
         isAIGenerated: data.metadata?.isAIGenerated,
         apiKeyStatus: data.metadata?.apiKeyStatus
       })
+      
+      // Debug actual content
+      if (data.research) {
+        console.log('Research Content:')
+        console.log('- Overview:', !!data.research.overview)
+        console.log('- Culture:', !!data.research.culture)
+        console.log('- Interview Process:', !!data.research.interviewProcess)
+        console.log('- Recent News:', data.research.recentNews?.length || 0, 'items')
+        console.log('- Employee Insights:', !!data.research.glassdoorInsights)
+        console.log('Full research object:', data.research)
+      }
       
       setCompanyResearch(data.research)
       setActiveAiView('research')
