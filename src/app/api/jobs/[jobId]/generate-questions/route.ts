@@ -129,11 +129,10 @@ export async function POST(
 
     // Check for existing AI questions to avoid redundant API calls
     // Skip cache in development mode for testing
-    // TEMPORARILY DISABLED FOR DEBUGGING - ALWAYS REGENERATE
-    if (false && jobApplication.aiQuestions && process.env.NODE_ENV !== 'development') {
+    if (jobApplication.aiQuestions && process.env.NODE_ENV !== 'development') {
       console.log('🔄 Returning cached questions for:', jobApplication.company)
       const response = NextResponse.json({
-        message: 'Interview questions already generated',
+        message: 'Interview questions already generated (cached)',
         questions: jobApplication.aiQuestions,
         jobApplication,
         metadata: {

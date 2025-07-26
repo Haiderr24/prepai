@@ -181,11 +181,10 @@ export async function POST(
 
     // Check for existing company research to avoid redundant API calls
     // Skip cache in development mode for testing
-    // TEMPORARILY DISABLED FOR DEBUGGING - ALWAYS REGENERATE
-    if (false && jobApplication.companyResearch && process.env.NODE_ENV !== 'development') {
+    if (jobApplication.companyResearch && process.env.NODE_ENV !== 'development') {
       console.log('🔄 Returning cached company research for:', jobApplication.company)
       const response = NextResponse.json({
-        message: 'Company research already completed',
+        message: 'Company research already completed (cached)',
         research: jobApplication.companyResearch,
         jobApplication,
         metadata: {
