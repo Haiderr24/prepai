@@ -180,11 +180,12 @@ Example format:
     
     // Log more details about the error
     if (error && typeof error === 'object') {
+      const errorObj = error as { message?: string; status?: number; code?: string; type?: string };
       console.error('Error details:', {
-        message: (error as any).message,
-        status: (error as any).status,
-        code: (error as any).code,
-        type: (error as any).type,
+        message: errorObj.message,
+        status: errorObj.status,
+        code: errorObj.code,
+        type: errorObj.type,
       });
     }
     
@@ -338,11 +339,12 @@ Keep responses concise. Return valid JSON only.`
     
     // Log more details about the error
     if (error && typeof error === 'object') {
+      const errorObj = error as { message?: string; status?: number; code?: string; type?: string };
       console.error('Company research error details:', {
-        message: (error as any).message,
-        status: (error as any).status,
-        code: (error as any).code,
-        type: (error as any).type,
+        message: errorObj.message,
+        status: errorObj.status,
+        code: errorObj.code,
+        type: errorObj.type,
       });
     }
     
@@ -446,11 +448,12 @@ Focus on actionable talking points and strategic tips, not scripted answers.`
     
     // Log more details about the error
     if (error && typeof error === 'object') {
+      const errorObj = error as { message?: string; status?: number; code?: string; type?: string };
       console.error('Personalized prep error details:', {
-        message: (error as any).message,
-        status: (error as any).status,
-        code: (error as any).code,
-        type: (error as any).type,
+        message: errorObj.message,
+        status: errorObj.status,
+        code: errorObj.code,
+        type: errorObj.type,
       });
     }
     
