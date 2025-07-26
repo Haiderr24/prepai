@@ -91,7 +91,8 @@ export async function POST(
 
     // Check for existing personalized prep to avoid redundant API calls
     // Skip cache in development mode for testing
-    if (jobApplication.personalizedPrep && process.env.NODE_ENV !== 'development') {
+    // TEMPORARILY DISABLED FOR DEBUGGING - ALWAYS REGENERATE
+    if (false && jobApplication.personalizedPrep && process.env.NODE_ENV !== 'development') {
       console.log('🔄 Returning cached personalized prep for:', jobApplication.company)
       const response = NextResponse.json({
         message: 'Personalized prep already created',
